@@ -135,3 +135,270 @@ cluster3 = df_cluster[labels == 2].reset_index(drop = True) #Providing the label
 cluster1.to_excel('country_group1.xlsx') #Creating the new excelfile
 cluster2.to_excel('country_group2.xlsx') #Creating the new excelfile
 cluster3.to_excel('country_group3.xlsx') #Creating the new excelfile
+# Defind a fuction to read the files
+
+def read_data(file_name, country, save_file): 
+    df = pd.read_excel(file_name, header = [3]) # To read the file
+    df = df[df['Country Name'].isin([country])].reset_index(drop = True)
+    df = df.T.reset_index(drop = False)
+    new_col1 = 'Year'
+    new_col2 = df.iloc[2,1]
+    df.columns = [new_col1, new_col2] # Set the columns name
+    df = df.iloc[4:,:].reset_index(drop = True)
+    df = df.dropna().reset_index(drop = True) #To drop the column
+    df = df.astype(float)
+    print(df) # To print the data
+    df.to_excel(save_file) #To save the file 
+    return df
+
+df1 = read_data('GDP PER CAPITA.xls', 'India', 'GDP_INDIA.xlsx')  # Calling the function to read the file
+df2 = read_data('Adjusted net national income per capita.xls', 'India', 'Income_India.xlsx')  # Calling the function to read the file
+df3 = read_data('GDP PER CAPITA.xls', 'Singapore', 'GDP_Singapore.xlsx')  # Calling the function to read the file
+df4 = read_data('Adjusted net national income per capita.xls', 'Singapore', 'Income_Singapore.xlsx')  # Calling the function to read the file
+df5 = read_data('GDP PER CAPITA.xls', 'Italy', 'GDP_ITALY.xlsx')  # Calling the function to read the file
+df6 = read_data('Adjusted net national income per capita.xls', 'Italy', 'Income_Italy.xlsx')  # Calling the function to read the file
+
+def exp_growth(t, scale, growth):
+    f = scale * np.exp(growth * (t-1960)) 
+    return f
+       
+
+# fitting of exponential function to df-1
+param, covar = opt.curve_fit(exp_growth, df1['Year'], df1['GDP per capita (current US$)'], p0=(2e9, 0.05), maxfev = 2000)
+df1['fit'] = exp_growth(df1['Year'], *param)
+
+plt.figure(dpi = 300) #To create the figure    
+plt.plot(df1['Year'], df1['GDP per capita (current US$)'], label = 'GDP per capita (current US$)') #To plot the graph
+plt.xlabel('Year') #Providing x label
+plt.ylabel('GDP per capita (current US$)') #Providing the y label
+plt.legend() #Providing the legend
+plt.show() #To show the plot
+
+sigma = np.sqrt(np.diag(covar)) #Defining the sigma function
+print(sigma) #Printing the sigma
+low, up = err.err_ranges(df1["Year"], exp_growth, param, sigma) #Low and up error range
+print('lower limit:', low, 'upper limt:', up)
+plt.figure(dpi = 300) #To create figure size
+plt.plot(df1['Year'], df1['GDP per capita (current US$)'], label = 'GDP per capita (current US$)',color = 'black') #To create the plot
+plt.plot(df1['Year'], df1['fit'], label = 'fit',color = 'red') #Plot the data
+plt.fill_between(df1['Year'], low, up,color="green", alpha = 0.7) #Fill the upper and lower data
+plt.title('Fitting with Exponential function(Country-India)') #To provide the title
+plt.xlabel('Year') #To provide the xlabel
+plt.ylabel('GDP per capita (current US$)') #To provide the ylabel
+plt.legend(loc='upper left') #To show the legend
+plt.show() # To show the plot
+
+print("Forcasted GDP Per Capita of India")
+low, up = err.err_ranges(2030, exp_growth, param, sigma) #low and up error range with exponential function
+mean = (up+low) / 2.0
+pm = (up-low) / 2.0
+print("2030:", mean, "+/-", pm)
+low, up = err.err_ranges(2040, exp_growth, param, sigma)
+mean = (up+low) / 2.0
+pm = (up-low) / 2.0
+print("2040:", mean, "+/-", pm)
+low, up = err.err_ranges(2050, exp_growth, param, sigma)
+mean = (up+low) / 2.0
+pm = (up-low) / 2.0
+print("2050:", mean, "+/-", pm)
+
+# fit exponential function to df-2
+param, covar = opt.curve_fit(exp_growth, df2['Year'], df2['Adjusted net national income per capita (current US$)'], p0=(2e9, 0.05), maxfev = 2000)
+df2['fit'] = exp_growth(df2['Year'], *param)
+plt.figure(dpi = 300)    
+plt.plot(df2['Year'], df2['Adjusted net national income per capita (current US$)'], label = 'Adjusted net national income per capita (current US$)')
+plt.plot(df2['Year'], df2['fit'], label = 'fit') #To plot the fit line
+plt.xlabel('Year') #To provide the xlabel
+plt.ylabel('Adjusted net national income per capita (current US$)') #To provide the ylabel
+plt.legend(loc='upper left') #To show the legend
+plt.show() # To show the plot
+
+sigma = np.sqrt(np.diag(covar)) #Defining the sigma function
+print(sigma) #Print the sigma 
+low, up = err.err_ranges(df2["Year"], exp_growth, param, sigma) #Low and up error range
+#print('lower limit:', low, 'upper limt:', up)
+plt.figure(dpi = 300) #To create the figure
+plt.plot(df2['Year'], df2['Adjusted net national income per capita (current US$)'], label = 'National income per capita (current US$)',color = 'black') #To plot the data
+plt.plot(df2['Year'], df2['fit'], label = 'fit',color = 'red') #To plot the fit line
+plt.fill_between(df2['Year'], low, up,color="Purple", alpha = 0.7) #To fill the upper and lower error
+plt.title('Fitting with Exponential function(Country-India)') #To provide the title
+plt.xlabel('Year') #To provide the xlabel
+plt.ylabel('National income per capita (current US$)') #To provide the ylabel
+plt.legend(loc='upper left') #To show the legend
+plt.show() # To show the plot
+
+print("Forcasted national Income per capita of India")
+low, up = err.err_ranges(2030, exp_growth, param, sigma)
+mean = (up+low) / 2.0
+pm = (up-low) / 2.0
+print("2030:", mean, "+/-", pm)
+low, up = err.err_ranges(2040, exp_growth, param, sigma)
+mean = (up+low) / 2.0
+pm = (up-low) / 2.0
+print("2040:", mean, "+/-", pm)
+low, up = err.err_ranges(2050, exp_growth, param, sigma)
+mean = (up+low) / 2.0
+pm = (up-low) / 2.0
+print("2050:", mean, "+/-", pm)
+
+# fit exponential function to df-3
+
+param, covar = opt.curve_fit(exp_growth, df3['Year'], df3['GDP per capita (current US$)'], p0=(1700, 0.1), maxfev = 2000)
+df3['fit'] = exp_growth(df3['Year'], *param)
+
+plt.figure(dpi = 300)    
+plt.plot(df3['Year'], df3['GDP per capita (current US$)'], label = 'GDP per capita (current US$)')
+plt.plot(df3['Year'], df3['fit'], label = 'fit') #Plot the data
+#plt.ylim(50, 65)
+plt.xlabel('Year') #Providing x label
+plt.ylabel('GDP per capita (current US$)') #Providing the y label
+plt.legend() #Providing the legend
+plt.show() #To show the plot
+
+sigma = np.sqrt(np.diag(covar))
+print(sigma)
+low, up = err.err_ranges(df3["Year"], exp_growth, param, sigma)
+#print('lower limit:', low, 'upper limt:', up)
+plt.figure(dpi = 300)
+plt.plot(df3['Year'], df3['GDP per capita (current US$)'], label = 'GDP per capita (current US$)',color = 'black')
+plt.plot(df3['Year'], df3['fit'], label = 'fit',color = 'red') #Plot the data
+plt.fill_between(df3['Year'], low, up,color="yellow", alpha = 0.7) #Fill the upper and lower data
+plt.title('Fitting with Exponential function(Country-Singapore)') #To provide the title
+plt.xlabel('Year') #To provide the xlabel
+plt.ylabel('GDP per capita (current US$)') #To provide the ylabel
+plt.legend(loc='upper left') #To show the legend
+plt.show() # To show the plot
+
+print("Forcasted GDP Per Capita of Singapor")
+low, up = err.err_ranges(2030, exp_growth, param, sigma)
+mean = (up+low) / 2.0
+pm = (up-low) / 2.0
+print("2030:", mean, "+/-", pm)
+low, up = err.err_ranges(2040, exp_growth, param, sigma)
+mean = (up+low) / 2.0
+pm = (up-low) / 2.0
+print("2040:", mean, "+/-", pm)
+low, up = err.err_ranges(2050, exp_growth, param, sigma)
+mean = (up+low) / 2.0
+pm = (up-low) / 2.0
+print("2050:", mean, "+/-", pm)
+
+# fit exponential function to df-4
+param, covar = opt.curve_fit(exp_growth, df4['Year'], df4['Adjusted net national income per capita (current US$)'], p0=(2e9, 0.05), maxfev = 2000)
+df4['fit'] = exp_growth(df4['Year'], *param)
+plt.figure(dpi = 300)    
+plt.plot(df4['Year'], df4['Adjusted net national income per capita (current US$)'], label = 'Adjusted net national income per capita (current US$)')
+plt.plot(df4['Year'], df4['fit'], label = 'fit') #To plot the fit line
+plt.xlabel('Year') #To provide the xlabel
+plt.ylabel('Adjusted net national income per capita (current US$)') #To provide the ylabel
+plt.legend(loc='upper left') #To show the legend
+plt.show() # To show the plot
+
+sigma = np.sqrt(np.diag(covar))
+print(sigma)
+low, up = err.err_ranges(df4["Year"], exp_growth, param, sigma)
+#print('lower limit:', low, 'upper limt:', up)
+plt.figure(dpi = 300)
+plt.plot(df4['Year'], df4['Adjusted net national income per capita (current US$)'], label = 'National income per capita (current US$)',color = 'black') #To plot the data
+plt.plot(df4['Year'], df4['fit'], label = 'fit',color = 'red') #To plot the fit line
+plt.fill_between(df4['Year'], low, up,color="blue", alpha = 0.7) #To fill the upper and lower error
+plt.title('Fitting with Exponential function(Country-Singapore)') #To provide the title
+plt.xlabel('Year') #To provide the xlabel
+plt.ylabel('National income per capita (current US$)') #To provide the ylabel
+plt.legend(loc='upper left') #To show the legend
+plt.show() # To show the plot
+
+print("Forcasted national Income per capita of Singapore")
+low, up = err.err_ranges(2030, exp_growth, param, sigma)
+mean = (up+low) / 2.0
+pm = (up-low) / 2.0
+print("2030:", mean, "+/-", pm)
+low, up = err.err_ranges(2040, exp_growth, param, sigma)
+mean = (up+low) / 2.0
+pm = (up-low) / 2.0
+print("2040:", mean, "+/-", pm)
+low, up = err.err_ranges(2050, exp_growth, param, sigma)
+mean = (up+low) / 2.0
+pm = (up-low) / 2.0
+print("2050:", mean, "+/-", pm)
+
+# fit exponential function to df-5
+
+param, covar = opt.curve_fit(exp_growth, df5['Year'], df5['GDP per capita (current US$)'], p0=(1700, 0.1), maxfev = 2000)
+df5['fit'] = exp_growth(df5['Year'], *param)
+
+plt.figure(dpi = 300)    
+plt.plot(df5['Year'], df5['GDP per capita (current US$)'], label = 'GDP per capita (current US$)')
+plt.plot(df5['Year'], df5['fit'], label = 'fit') #Plot the data
+#plt.ylim(50, 65)
+plt.xlabel('Year') #Providing x label
+plt.ylabel('GDP per capita (current US$)') #Providing the y label
+plt.legend() #Providing the legend
+plt.show() #To show the plot
+
+sigma = np.sqrt(np.diag(covar))
+print(sigma)
+low, up = err.err_ranges(df5["Year"], exp_growth, param, sigma)
+#print('lower limit:', low, 'upper limt:', up)
+plt.figure(dpi = 300)
+plt.plot(df5['Year'], df5['GDP per capita (current US$)'], label = 'GDP per capita (current US$)',color = 'black')
+plt.plot(df5['Year'], df5['fit'], label = 'fit',color = 'red') #Plot the data
+plt.fill_between(df5['Year'], low, up,color="maroon", alpha = 0.7) #Fill the upper and lower data
+plt.title('Fitting with Exponential function(Country-Italy)') #To provide the title
+plt.xlabel('Year') #To provide the xlabel
+plt.ylabel('GDP per capita (current US$)') #To provide the ylabel
+plt.legend(loc='upper left') #To show the legend
+plt.show() # To show the plot
+
+print("Forcasted GDP Per Capita of Italy")
+low, up = err.err_ranges(2030, exp_growth, param, sigma)
+mean = (up+low) / 2.0
+pm = (up-low) / 2.0
+print("2030:", mean, "+/-", pm)
+low, up = err.err_ranges(2040, exp_growth, param, sigma)
+mean = (up+low) / 2.0
+pm = (up-low) / 2.0
+print("2040:", mean, "+/-", pm)
+low, up = err.err_ranges(2050, exp_growth, param, sigma)
+mean = (up+low) / 2.0
+pm = (up-low) / 2.0
+print("2050:", mean, "+/-", pm)
+
+# fit exponential function to df-6
+param, covar = opt.curve_fit(exp_growth, df6['Year'], df6['Adjusted net national income per capita (current US$)'], p0=(1880,0.01), maxfev = 2000)
+df6['fit'] = exp_growth(df6['Year'], *param)
+plt.figure(dpi = 300) #To create the figure size    
+plt.plot(df6['Year'], df6['Adjusted net national income per capita (current US$)'], label = 'Adjusted net national income per capita (current US$)')
+plt.plot(df6['Year'], df6['fit'], label = 'fit') #To plot the fit line
+plt.xlabel('Year') #To provide the xlabel
+plt.ylabel('Adjusted net national income per capita (current US$)') #To provide the ylabel
+plt.legend(loc='upper left') #To show the legend
+plt.show() # To show the plot
+
+sigma = np.sqrt(np.diag(covar))
+print(sigma)
+low, up = err.err_ranges(df6["Year"], exp_growth, param, sigma)
+#print('lower limit:', low, 'upper limt:', up)
+plt.figure(dpi = 300)
+plt.plot(df6['Year'], df6['Adjusted net national income per capita (current US$)'], label = 'National income per capita (current US$)',color = 'black') #To plot the data
+plt.plot(df6['Year'], df6['fit'], label = 'fit',color = 'red') #To plot the fit line
+plt.fill_between(df6['Year'], low, up,color="pink", alpha = 0.7) #To fill the upper and lower error
+plt.title('Fitting with Exponential function(Country-Italy)') #To provide the title
+plt.xlabel('Year') #To provide the xlabel
+plt.ylabel('National income per capita (current US$)') #To provide the ylabel
+plt.legend(loc='upper left') #To show the legend
+plt.show() # To show the plot
+
+print("Forcasted national Income per capita of Italy")
+low, up = err.err_ranges(2030, exp_growth, param, sigma)
+mean = (up+low) / 2.0
+pm = (up-low) / 2.0
+print("2030:", mean, "+/-", pm)
+low, up = err.err_ranges(2040, exp_growth, param, sigma)
+mean = (up+low) / 2.0
+pm = (up-low) / 2.0
+print("2040:", mean, "+/-", pm)
+low, up = err.err_ranges(2050, exp_growth, param, sigma)
+mean = (up+low) / 2.0
+pm = (up-low) / 2.0
+print("2050:", mean, "+/-", pm)
