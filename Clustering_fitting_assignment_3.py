@@ -1,4 +1,4 @@
-# Importing All the Python Inbuit Libraries
+# Importing All the Python Inbuilt Libraries
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -135,8 +135,8 @@ cluster3 = df_cluster[labels == 2].reset_index(drop = True) #Providing the label
 cluster1.to_excel('country_group1.xlsx') #Creating the new excelfile
 cluster2.to_excel('country_group2.xlsx') #Creating the new excelfile
 cluster3.to_excel('country_group3.xlsx') #Creating the new excelfile
-# Defind a fuction to read the files
 
+# Defind a fuction to read the files
 def read_data(file_name, country, save_file): 
     df = pd.read_excel(file_name, header = [3]) # To read the file
     df = df[df['Country Name'].isin([country])].reset_index(drop = True)
@@ -162,6 +162,27 @@ def exp_growth(t, scale, growth):
     f = scale * np.exp(growth * (t-1960)) 
     return f
        
+def err_ranges(x, func, param, sigma):
+  
+    import itertools as iter
+    # initiate arrays for lower and upper limits
+    lower = func(x, *param)
+    upper = lower
+    
+    uplow = []   # list to hold upper and lower limits for parameters
+    for p,s in zip(param, sigma):
+        pmin = p - s
+        pmax = p + s
+        uplow.append((pmin, pmax))
+        
+    pmix = list(iter.product(*uplow))
+    
+    for p in pmix:
+        y = func(x, *p)
+        lower = np.minimum(lower, y)
+        upper = np.maximum(upper, y)
+        
+    return lower, upper
 
 # fitting of exponential function to df-1
 param, covar = opt.curve_fit(exp_growth, df1['Year'], df1['GDP per capita (current US$)'], p0=(2e9, 0.05), maxfev = 2000)
